@@ -1,13 +1,13 @@
 /*
-Ho Yun "Bobby" Chan
+GPSParserSerial7Seg.ino
+By: Ho Yun "Bobby" Chan
+Updated April, 11th 2017
 September 27th, 2015
 
-This code parses the GPS data when there is a satellite lock
+Description: This code parses the GPS data when there is a satellite lock
 and outputs the data to a 7-segment serial display using
 software serial pins. The clock is adjust for Mountain Standard
-Time with an optional mode for daylight savings.
-
-*/
+Time with an optional mode for daylight savings.*/
 
 #include <TinyGPS++.h> //GPS parser from arduiniana.org
 #include <SoftwareSerial.h>
@@ -15,7 +15,7 @@ Time with an optional mode for daylight savings.
 #define RXPIN 2
 #define TXPIN 3
 SoftwareSerial uart_gps(RXPIN, TXPIN); //Rx = 2, Tx = 3
-SoftwareSerial s7s(7,8); //rx = 7, tx =8
+SoftwareSerial s7s(8,7); //rx = 8, tx =7
 
 #define GPSBAUD 4800 //baud rate of GPS
 TinyGPSPlus gps; //create instance of TinyGPS object
@@ -42,6 +42,7 @@ void setup(){
   s7s.write(0x76);  // Clear display command
   s7s.write(0x77);//send command byte to turn on colon
   s7s.write(0b010000);//turn on colon
+  s7s.print("-HI-");
   s7s.end();
 
   uart_gps.begin(GPSBAUD);
