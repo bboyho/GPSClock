@@ -71,50 +71,43 @@ void loop() {
 }
 
 void getgps(TinyGPSPlus &gps) {
-  //Note: time obtained is Universal Time Coordinated (UTC)/Greenwich Mean Time (GMT)
-  //Mountain Standard Time = 7 hours behind UTC
-  //Mountain Daylight Time = 6 hours behind UTC during Daylight Savings Time
   Serial.println("HH:MM:SS");
   time_hour = gps.time.hour(); //get raw hour (0-23) (u8)
-  //adjust time for Mountain!
-  //--------------------Mountain Standard Time --------------------
-  if (MDT == 0) { //Mountain Standard Time
+  //Note: Time obtained is Universal Time Coordinated (UTC)/Greenwich Mean Time (GMT)
+  //adjust time for mountain! below!
+  //--------------------Mountain Daylight Time --------------------
+  // if (MDT == true) {
 
-    //UTC=>Mountain Time Conversion
-    //7am-12pm=>12am-5am
-    //12pm-18pm=>5am-11pm
+  //UTC ahead 6 hrs Mountain Daylight Time so we need to subtact 6 to convert
+  //UTC-6 => Mountain Time Conversion
+  //AM
+  //07 to 11 and 12 to 19<=00 to 06 and 07 to 12
+  //PM
+  //19 to 23 and 00 to 07<=12 to 16 and 17 to 00
 
-    //19pm-0am=>12pm-5pm
-    //0am-6am=>5pm-11am
-
-    if (time_hour >= 7 && time_hour < 19) { //in the 12AM-11AM
-      time_hour = time_hour - 7;
-      AM = true;//set for AM
-    }
-
-    else { //time_hour<6 && time_hour>=19 therefore, in the 12PM-11PM
-      if (time_hour < 6) {
-        time_hour = time_hour + 12 - 7; //adjust so hour is not negative
-      }
-      else if (time_hour >= 19) {
-        time_hour = time_hour - 7;
-      }
-      AM = false;//set for PM
-    }
+  //in the AM, we will not have negative numbers going back 6 hrs
+  //12:00am to 11:59am
+  if (time_hour >= 7 && time_hour < 18) {
+    time_hour = time_hour - 6;
+    AM = true;//set for AM
   }
-  //-------------------- End Mountain Standard Time --------------------
-
-  //-------------------- Mountain Daylight Time --------------------
-  else { //Mountain Daylight Time
-    if (time_hour < 12) {
-      time_hour = time_hour + 12 - 6;
-      AM = false;//set for PM
-    }
-    else if (time_hour > 12) {
-      time_hour = time_hour - 6;
-    }
+  //in the PM
+  //12:00pm to 5:59pm
+  else if (time_hour >= 18 && time_hour <= 23) {
+    time_hour = time_hour - 6 - 12;
+    AM = false;//set for PM
+  }
+  //6:00pm to 11:59am
+  else if (time_hour >= 00 && time_hour < 7) { //never reaches 24, it goes back to 00
+    time_hour = time_hour + 12 - 6; //adjust so hour is not negative
+    AM = false;//set for PM
   }
 
+  //-------------------- End Mountain Daylight Time --------------------
+
+  //-------------------- Mountain Savings Time --------------------
+  //UTC ahead 6 hrs Mountain Daylight Time so we need to subtact 7 to convert
+  //UTC-7 => Mountain Time Conversion
   //--------------------End Mountain Daylight Time --------------------
 
   //-------------------- Output to UART pins --------------------
@@ -128,9 +121,7 @@ void getgps(TinyGPSPlus &gps) {
 
   if (AM == true) {
     digitalWrite(13, LOW); //it's AM
-
     Serial.println(" AM");
-
   }
   else {
     digitalWrite(13, HIGH); //it's PM
