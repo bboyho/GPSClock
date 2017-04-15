@@ -57,7 +57,7 @@ void setup() {
   Serial.println(" ...waiting for lock...");
   Serial.println("");
 
-  pinMode(13, OUTPUT);
+  pinMode(13, OUTPUT); // PM indicator
 
 }
 
