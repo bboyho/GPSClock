@@ -3,11 +3,13 @@
   By: Ho Yun "Bobby" Chan
   Updated April, 15th 2017
   September 27th, 2015
+  //last upload to project w/ Arduino.cc's Arduino IDE v1.6.8
 
   Description: This code parses the GPS data when there is a satellite lock
   and outputs the data to a 7-segment serial display using
   software serial pins. The clock is adjust for Mountain Standard
   Time with an optional mode for daylight savings.*/
+
 
 #include <TinyGPS++.h> //GPS parser from arduiniana.org
 #include <SoftwareSerial.h>
