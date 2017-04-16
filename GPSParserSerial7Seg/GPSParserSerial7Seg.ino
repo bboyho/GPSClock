@@ -247,26 +247,36 @@ void getgps(TinyGPSPlus &gps) {
   }
   else { //hour the same, do nothing
   }
-  //time_minute = 0;
-  
+
   if (time_minuteTemp != time_minute) {
     time_minuteTemp = time_minute;
-    if (time_minuteTemp >= 10) {
+
+    if (time_minuteTemp >= 10) {//between 10 m to 59 min
       s7s.write(0x79);//command byte for cursor control
       s7s.write(0x02);
       s7s.print(time_minute);
     }
-    else { //minutes<10
+    else if (time_minuteTemp > 0 && time_minuteTemp < 10) {//between 1 min to 9 min
       s7s.write(0x79);//command byte for cursor control
       s7s.write(0x02);
-      s7s.print(0);
+      s7s.print(0);//place 0 in position if individual digit
       s7s.print(time_minute);
+    }
+    else if (time_minuteTemp == 0) {//0 min
+      s7s.write(0x79);//command byte for cursor control
+      s7s.write(0x02);
+      s7s.print(0);//place 0 in position if individual digit
+
+      s7s.write(0x79);//command byte for cursor control
+      s7s.write(0x03);
+      s7s.print(0);//place 0 in position if individual digit
     }
   }
-  else { //minutes the same, do nothing
+  else {
+    //minutes the same, do nothing here
   }
 
-  s7s.end();
+  s7s.end();//turn of software serial for 7-segment serial display
 
   uart_gps.begin(GPSBAUD);//turn back on
 }
