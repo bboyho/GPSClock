@@ -22,18 +22,20 @@ TinyGPSPlus gps; //create instance of TinyGPS object
 
 void getgps(TinyGPSPlus &gps);
 
+//used to convert GPS UTC time to Mountain Time
 int time_hour = 0;
 int time_minute = 0;
 int time_second = 0;
 
+//for 7 segment display
 int time_hourTemp = 0;
 int time_minuteTemp = 0;
 int time_secondTemp = 0;
 
 byte zero = 0;//can't compile and use Serial.write(0x00);, must use Serial.write(zero);
 
-boolean MDT = true; //Mountain Daylight Time, for Daylight Savings Time
-boolean AM = true; //AM or PM?
+boolean MDT = true; //Mountain Daylight Time == false, for Daylight Savings Time == trueh
+boolean AM = false; //AM or PM?
 
 void setup() {
   Serial.begin(115200);
@@ -76,139 +78,139 @@ void getgps(TinyGPSPlus &gps) {
   //Note: Time obtained is Universal Time Coordinated (UTC)/Greenwich Mean Time (GMT)
   //adjust time for mountain! below!
   //--------------------Mountain Daylight Time --------------------
-  //MDT == true
-
   //UTC ahead 6 hrs Mountain Daylight Time so we need to subtact 6 to convert
   //UTC-6 => Mountain Time Conversion
   //AM
-  //07 to 11 and 12 to 18<=00 to 06 and 07 to 12
+  //06 to 11 and 12 to 18<=00 to 06 and 07 to 12
   //PM
   //18 to 23 and 00 to 07<=12 to 16 and 17 to 00
 
   //in the AM, we will not have negative numbers going back 6 hrs
-  //12:00am to 11:59am
-  if (time_hour == 6) {
-    time_hour = time_hour - 6 + 12;
-    AM = true;// set for AM
+  if (MDT == true) {
+    //12:00am to 12:59am
+    if (time_hour == 6) {
+      time_hour = time_hour - 6 + 12;
+      AM = true;// set for AM
+    }
+    //1:00am to 11:59am
+    else if (time_hour >= 7 && time_hour < 18) {
+      time_hour = time_hour - 6;
+      AM = true;//set for AM
+    }
+    //in the PM
+    //12:00pm to 12:59pm
+    else if (time_hour == 18) {
+      time_hour = time_hour - 6;
+      AM = false;//set for PM
+    }
+    //1:00pm to 5:59pm
+    else if (time_hour > 18 && time_hour <= 23) {
+      time_hour = time_hour - 6 - 12;
+      AM = false;//set for PM
+    }
+    //6:00pm to 11:59pm
+    else if (time_hour >= 00 && time_hour < 6) { //never reaches 24, it goes back to 00
+      time_hour = time_hour + 12 - 6; //adjust so hour is not negative
+      AM = false;//set for PM
+    }
   }
-  else if (time_hour >= 7 && time_hour < 18) {
-    time_hour = time_hour - 6;
-    AM = true;//set for AM
-  }
-  //in the PM
-  //12:00pm to 12:59pm
-  else if (time_hour == 18) {
-    time_hour = time_hour - 6;
-    AM = false;//set for PM
-  }
-  //1:00pm to 5:59pm
-  else if (time_hour > 18 && time_hour <= 23) {
-    time_hour = time_hour - 6 - 12;
-    AM = false;//set for PM
-  }
-  //6:00pm to 11:59pm
-  else if (time_hour >= 00 && time_hour < 6) { //never reaches 24, it goes back to 00
-    time_hour = time_hour + 12 - 6; //adjust so hour is not negative
-    AM = false;//set for PM
-  }
-
   //-------------------- End Mountain Daylight Time --------------------
 
   //-------------------- Mountain Savings Time --------------------
-  //UTC ahead 6 hrs Mountain Daylight Time so we need to subtact 7 to convert
+  //UTC ahead 7 hrs Mountain Daylight Time so we need to subtact 7 to convert
   //UTC-7 => Mountain Time Conversion
-
-  //MDT == false
 
   //AM
   //07 to 11 and 12 to 19<=00 to 06 and 07 to 12
   //PM
   //19 to 23 and 00 to 07<=12 to 16 and 17 to 00
 
-   //in the AM, we will not have negative numbers going back 6 hrs
-  //12:00am to 11:59am
-  /*
-  if (time_hour == 6) {
-    time_hour = time_hour - 6 + 12;
-    AM = true;// set for AM
-  }
-  else if (time_hour >= 7 && time_hour < 18) {
-    time_hour = time_hour - 6;
-    AM = true;//set for AM
-  }
-  //in the PM
-  //12:00pm to 12:59pm
-  else if (time_hour == 18) {
-    time_hour = time_hour - 6;
-    AM = false;//set for PM
-  }
-  //1:00pm to 5:59pm
-  else if (time_hour > 18 && time_hour <= 23) {
-    time_hour = time_hour - 6 - 12;
-    AM = false;//set for PM
-  }
-  //6:00pm to 11:59pm
-  else if (time_hour >= 00 && time_hour < 6) { //never reaches 24, it goes back to 00
-    time_hour = time_hour + 12 - 6; //adjust so hour is not negative
-    AM = false;//set for PM
-  }
-    */
-    //--------------------End Mountain Daylight Time --------------------
+  //in the AM, we will not have negative numbers going back 7 hrs
 
-    //-------------------- Output to UART pins --------------------
-    Serial.print(time_hour);
-    Serial.print(":");
-    time_minute = gps.time.minute();//get raw minute (0-59) (u8)
-    Serial.print(time_minute);
-    Serial.print(":");
-    time_second = gps.time.second(); //get raw sec (0-59) (u8)
-    Serial.print(time_second);
+  else { //MDT == false
+    //12:00am to 12:59am
+    if (time_hour == 7) {
+      time_hour = time_hour - 7 + 12;
+      AM = true;// set for AM
+    }
+    //1:00am to 11:59am
+    else if (time_hour >= 8 && time_hour < 19) {
+      time_hour = time_hour - 7;
+      AM = true;//set for AM
+    }
+    //in the PM
+    //12:00pm to 12:59pm
+    else if (time_hour == 19) {
+      time_hour = time_hour - 7;
+      AM = false;//set for PM
+    }
+    //1:00pm to 4:59pm
+    else if (time_hour > 19 && time_hour <= 23) {
+      time_hour = time_hour - 7 - 12;
+      AM = false;//set for PM
+    }
+    //5:00pm to 11:59pm
+    else if (time_hour >= 00 && time_hour < 7) { //never reaches 24, it goes back to 00
+      time_hour = time_hour + 12 - 7; //adjust so hour is not negative
+      AM = false;//set for PM
+    }
+  }
+  //--------------------End Mountain Savings Time --------------------
 
-    if (AM == true) {
+  //-------------------- Output to UART pins --------------------
+  Serial.print(time_hour);
+  Serial.print(":");
+  time_minute = gps.time.minute();//get raw minute (0-59) (u8)
+  Serial.print(time_minute);
+  Serial.print(":");
+  time_second = gps.time.second(); //get raw sec (0-59) (u8)
+  Serial.print(time_second);
+
+  if (AM == true) {
     digitalWrite(13, LOW); //it's AM
     Serial.println(" AM");
-    }
-    else {
+  }
+  else {
     digitalWrite(13, HIGH); //it's PM
     Serial.println(" PM");
-    }
-    //--------------------End Output to UART pins --------------------
-    uart_gps.end();//temporarily turn of gps UART, can only have one at a time
+  }
+  //--------------------End Output to UART pins --------------------
+  uart_gps.end();//temporarily turn of gps UART, can only have one at a time
 
-    s7s.begin(9600);
-    if (time_hourTemp != time_hour) {
+  s7s.begin(9600);
+  if (time_hourTemp != time_hour) {
     time_hourTemp = time_hour;
     if (time_hour >= 10) {
-     s7s.write(0x79);//command byte for cursor control
-     s7s.write(zero);
-     s7s.print(time_hour);
+      s7s.write(0x79);//command byte for cursor control
+      s7s.write(zero);
+      s7s.print(time_hour);
     }
     else { //hour<10
-     s7s.write(0x79);//command byte for cursor control
-     s7s.write(0x01);
-     s7s.print(time_hour);
+      s7s.write(0x79);//command byte for cursor control
+      s7s.write(0x01);
+      s7s.print(time_hour);
     }
-    }
-    else { //hour the same, do nothing
-    }
-    if (time_minuteTemp != time_minute) {
+  }
+  else { //hour the same, do nothing
+  }
+  if (time_minuteTemp != time_minute) {
     time_minuteTemp = time_minute;
     if (time_minuteTemp >= 10) {
-     s7s.write(0x79);//command byte for cursor control
-     s7s.write(0x02);
-     s7s.print(time_minute);
+      s7s.write(0x79);//command byte for cursor control
+      s7s.write(0x02);
+      s7s.print(time_minute);
     }
     else { //minutes<10
-     s7s.write(0x79);//command byte for cursor control
-     s7s.write(0x02);
-     s7s.print(0);
-     s7s.print(time_minute);
+      s7s.write(0x79);//command byte for cursor control
+      s7s.write(0x02);
+      s7s.print(0);
+      s7s.print(time_minute);
     }
-    }
-    else { //minutes the same, do nothing
-    }
+  }
+  else { //minutes the same, do nothing
+  }
 
-    s7s.end();
+  s7s.end();
 
-    uart_gps.begin(GPSBAUD);//turn back on
-    }
+  uart_gps.begin(GPSBAUD);//turn back on
+}
