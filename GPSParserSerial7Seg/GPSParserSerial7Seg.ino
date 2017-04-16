@@ -1,7 +1,7 @@
 /*
   GPSParserSerial7Seg.ino
   By: Ho Yun "Bobby" Chan
-  Updated April, 11th 2017
+  Updated April, 15th 2017
   September 27th, 2015
 
   Description: This code parses the GPS data when there is a satellite lock
@@ -34,8 +34,17 @@ int time_secondTemp = 0;
 
 byte zero = 0;//can't compile and use Serial.write(0x00);, must use Serial.write(zero);
 
-boolean MDT = true; //Mountain Daylight Time == false, for Daylight Savings Time == trueh
+boolean MDT = true; //Mountain Daylight Time == false, for Daylight Savings Time == true
+//MDT button
+const int buttonMDTPin = 5; //MDT button
+const int MDTLEDPin = 4;    //yellow LED
+int buttonMDTState = HIGH; //set MDT button HIGH, so not pressing
+//keep track if MDT  button press when held down
+boolean prev_buttonMDTState = false;
+boolean current_buttonMDTState = false;
+
 boolean AM = false; //AM or PM?
+const int AM_statusLED = 13;
 
 void setup() {
   Serial.begin(115200);
@@ -59,12 +68,45 @@ void setup() {
   Serial.println(" ...waiting for lock...");
   Serial.println("");
 
-  pinMode(13, OUTPUT); // PM indicator
+  pinMode(AM_statusLED, OUTPUT); // PM indicator
 
+  pinMode(buttonMDTPin, INPUT_PULLUP); //use internal pullup resistor to MDT button
+  pinMode(MDTLEDPin, OUTPUT);//set MDT LED
+  digitalWrite(MDTLEDPin, HIGH);//turn LED ON
 }
 
 void loop() {
   while (uart_gps.available()) { //while there is data on the RX pin
+    buttonMDTState = digitalRead(buttonMDTPin);//check state of MDT button
+
+    //----------MDT  Mode----------
+    //if MDT button pressed, change MDT
+
+    if (buttonMDTState == LOW) {
+      current_buttonMDTState = true; //button has been pressed
+      if (prev_buttonMDTState != current_buttonMDTState) {
+
+        if (MDT == true) {//change to Mountain Standard Time
+          digitalWrite(MDTLEDPin, LOW);//turn LED OFF
+          MDT = false;
+        }
+        else {//MDT == false, change back to Mount Daylight Time
+          digitalWrite(MDTLEDPin, HIGH);
+          MDT = true;
+        }
+      }
+      prev_buttonMDTState = current_buttonMDTState;//update MDT button's state
+    }
+    else if (buttonMDTState == HIGH) {
+      current_buttonMDTState = false;//button has not been pressed
+      if (prev_buttonMDTState != current_buttonMDTState) {
+        //do nothing here when button is not pressed
+
+      }
+      prev_buttonMDTState = current_buttonMDTState;//update MDT button's state
+    }
+
+    //update GPS time
     int c = uart_gps.read(); //load the data into a variable...
     if (gps.encode(c)) { //if there is a new valid sentence...
       getgps(gps);//then grab the data
@@ -157,7 +199,16 @@ void getgps(TinyGPSPlus &gps) {
   }
   //--------------------End Mountain Savings Time --------------------
 
-  //-------------------- Output to UART pins --------------------
+  //-------------------- Output to Serial UART for Debugging --------------------
+  if (MDT == true) {
+    Serial.println("Mountain Daylight Time");
+    Serial.println("Daylight savings ended so spring forward an hour");
+  }
+  else {
+    Serial.print("Mountain Standard Time");
+    Serial.println("Daylight savings begins so fall back an hour!");
+  }
+
   Serial.print(time_hour);
   Serial.print(":");
   time_minute = gps.time.minute();//get raw minute (0-59) (u8)
@@ -167,14 +218,17 @@ void getgps(TinyGPSPlus &gps) {
   Serial.print(time_second);
 
   if (AM == true) {
-    digitalWrite(13, LOW); //it's AM
+    digitalWrite(AM_statusLED, LOW); //it's AM
     Serial.println(" AM");
+    Serial.println();
   }
   else {
-    digitalWrite(13, HIGH); //it's PM
+    digitalWrite(AM_statusLED, HIGH); //it's PM
     Serial.println(" PM");
+    Serial.println();
   }
-  //--------------------End Output to UART pins --------------------
+
+  //--------------------End Output to Serial UART for Debugging --------------------
   uart_gps.end();//temporarily turn of gps UART, can only have one at a time
 
   s7s.begin(9600);
@@ -193,6 +247,8 @@ void getgps(TinyGPSPlus &gps) {
   }
   else { //hour the same, do nothing
   }
+  //time_minute = 0;
+  
   if (time_minuteTemp != time_minute) {
     time_minuteTemp = time_minute;
     if (time_minuteTemp >= 10) {
