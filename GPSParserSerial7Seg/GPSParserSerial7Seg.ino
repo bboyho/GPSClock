@@ -243,6 +243,12 @@ void getgps(TinyGPSPlus &gps) {
     }
     else { //hour<10
       s7s.write(0x79);//command byte for cursor control
+      s7s.write(zero);
+      
+      s7s.write(0x7B);//turn off if the hour switched from 12 to 1
+      s7s.write(zero);
+      
+      s7s.write(0x79);//command byte for cursor control
       s7s.write(0x01);
       s7s.print(time_hour);
     }
