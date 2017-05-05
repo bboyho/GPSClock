@@ -5,7 +5,7 @@ The current time is displayed using an Arduino Uno, [EM406A](https://www.sparkfu
 License Information
 -------------------
 
-This product is _**open source**_! 
+This project is _**open source**_! 
 
 Please review the [LICENSE.md](https://github.com/bboyho/GPSClock/blob/master/LICENSE.md) file for license information. 
 
